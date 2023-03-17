@@ -6,5 +6,5 @@ pub fn run(_options: &[CommandDataOption]) -> String {
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command.name("hello").description("NEIN NEIN NEIN command")
+    command.name("hello").description("Returns a greeting")
 }
