@@ -78,7 +78,12 @@ Example playing a track
 ```
 /play https://www.youtube.com/watch?v=dQw4w9WgXcQ
 ```
+* **Play**: Plays a track or playlist by providing a link or a keyword.
+* **Hello**: Returns a greeting.
 
+<br/>
+
+  <b>The following commands still needs to be implemented:</b>
 * **Ask**: Allows user to input a query for OpenAI and return the response.
 * **Meme**: Generates a meme using OpenAI.
 * **Back**: Go back to the previous track.
@@ -89,7 +94,7 @@ Example playing a track
 * **Loop**: Enable or disable looping of a track, or the whole queue.
 * **NowPlaying**: Shows the current playing track.
 * **Pause**: Pauses the player.
-* **Play**: Plays a track or playlist by providing a link or a keyword.
+
 * **PlayNext**: Sets the track that will play next in the queue.
 * **Remove**: Removes the specified track from the playlist.
 * **Resume**: Resumes the paused track.
@@ -101,7 +106,7 @@ Example playing a track
 * **Stop**: Stops the current track.
 * **Volume**: Adjusts the player's volume.
 * **Queue**: Lists the tracks in the current queue.
-* **Hello**: Returns a greeting.
+
 </p>
 
 ![-----------------------------------------------------](https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.png)
