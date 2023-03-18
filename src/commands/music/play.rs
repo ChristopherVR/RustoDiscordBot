@@ -5,7 +5,7 @@ use serenity::{
 
 const SLASH_NAME: &str = "link-or-query";
 
-pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> String {
+pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Option<String> {
     println!("Running play command.");
 
     if let Some(guild_id) = command.guild_id {
@@ -44,8 +44,16 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Stri
 
             let (handler_lock, conn_result) = manager.join(guild_id, channel_id.0).await;
 
+            let _res = command.defer(&ctx.http).await;
             if let Ok(_) = conn_result {
                 let mut handler = handler_lock.lock().await;
+
+                command
+                    .create_followup_message(&ctx.http, |f| {
+                        f.ephemeral(true).content("Searching for song.")
+                    })
+                    .await
+                    .unwrap();
 
                 let obj = match songbird::input::restartable::Restartable::ytdl_search(&song, true)
                     .await
@@ -58,18 +66,30 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Stri
                 };
 
                 if let Some(song) = obj {
+                    handler.stop();
                     let response = handler.play_source(song.into());
                     println!("Response for song object - {:?}", response);
+                    command
+                        .create_followup_message(&ctx.http, |f| {
+                            f.ephemeral(true).content("Song played!.")
+                        })
+                        .await
+                        .unwrap();
                 } else {
                     println!("Rip song didn't play");
-                    return "Unable to handle song request.".into();
+                    command
+                        .create_followup_message(&ctx.http, |f| {
+                            f.ephemeral(true).content("Unable to handle song request.")
+                        })
+                        .await
+                        .unwrap();
                 }
             }
         }
 
-        return "Oi mate".into();
+        return None;
     } else {
-        return "Unable to execute command. User is not connected to a channel".into();
+        return Some("Unable to execute command. User is not connected to a channel".into());
     }
 }
 
