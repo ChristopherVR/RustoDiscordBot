@@ -1,10 +1,6 @@
 use serenity::{
-    builder::CreateApplicationCommand,
-    client::Context,
-    json::Value,
-    model::prelude::{
-        interaction::application_command::ApplicationCommandInteraction, Guild, GuildId,
-    },
+    builder::CreateApplicationCommand, client::Context, json::Value,
+    model::prelude::interaction::application_command::ApplicationCommandInteraction,
 };
 
 const SLASH_NAME: &str = "link-or-query";
@@ -35,21 +31,8 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Stri
             // println!("This is the user object: {:?}", command.user);
             // println!("Current channel id - {}", command.channel_id);
 
-            println!("Hehe boi {:?}", &ctx.cache.guild(guild_id));
+            // println!("Hehe boi {:?}", &ctx.cache.guild(guild_id));
 
-            let all = ctx
-                .http
-                .get_guild(guild_id.0)
-                .await
-                .unwrap()
-                .channels(&ctx.http)
-                .await
-                .unwrap();
-
-            let channel = all.iter().find(|f| f.1.member_count > Some(0));
-            //  println!("The channels obj: {:?}", all);
-
-            println!("The channel with users in {:#?}", channel);
             let channel_id = &ctx
                 .cache
                 .guild(guild_id)
@@ -64,7 +47,6 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Stri
             if let Ok(_) = conn_result {
                 let mut handler = handler_lock.lock().await;
 
-                // let caller = songbird::Call::new(guild_id, co, command.user.id);
                 let obj = match songbird::input::restartable::Restartable::ytdl_search(&song, true)
                     .await
                 {
