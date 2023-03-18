@@ -22,19 +22,25 @@ impl EventHandler for Handler {
 
             let content = match command.data.name.as_str() {
                 "hello" => commands::hello::run(&command.data.options),
-                "play" => commands::music::play::run(&ctx, &command).await,
+                "play" => match commands::music::play::run(&ctx, &command).await {
+                    Some(v) => v,
+                    None => "".into(),
+                },
+                "stop" => commands::music::stop::run(&ctx, &command).await,
                 _ => "not implemented :(".to_string(),
             };
 
-            if let Err(why) = command
-                .create_interaction_response(&ctx.http, |response| {
-                    response
-                        .kind(InteractionResponseType::ChannelMessageWithSource)
-                        .interaction_response_data(|message| message.content(content))
-                })
-                .await
-            {
-                println!("Cannot respond to slash command: {}", why);
+            if content.len() > 0 {
+                if let Err(why) = command
+                    .create_interaction_response(&ctx.http, |response| {
+                        response
+                            .kind(InteractionResponseType::ChannelMessageWithSource)
+                            .interaction_response_data(|message| message.content(content))
+                    })
+                    .await
+                {
+                    println!("Cannot respond to slash command: {}", why);
+                }
             }
         }
     }
@@ -49,6 +55,7 @@ impl EventHandler for Handler {
                 commands
                     .create_application_command(|command| commands::hello::register(command))
                     .create_application_command(|command| commands::music::play::register(command))
+                    .create_application_command(|command| commands::music::stop::register(command))
             })
             .await;
 
