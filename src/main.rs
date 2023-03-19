@@ -15,10 +15,10 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        println!("The interaction {:?} ", interaction);
+        // println!("The interaction {:?} ", interaction);
 
         if let Interaction::ApplicationCommand(command) = interaction {
-            println!("Received command interaction: {:#?}", command);
+            // println!("Received command interaction: {:#?}", command);
 
             let content = match command.data.name.as_str() {
                 "hello" => commands::hello::run(&command.data.options),

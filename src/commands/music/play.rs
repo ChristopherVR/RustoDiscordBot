@@ -26,13 +26,6 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Opti
                 "Failed to retrieve Songbird. Check if Songbird is registered on ClientBuilder.",
             );
 
-            // println!("Songbird object: {:?}", manager);
-
-            // println!("This is the user object: {:?}", command.user);
-            // println!("Current channel id - {}", command.channel_id);
-
-            // println!("Hehe boi {:?}", &ctx.cache.guild(guild_id));
-
             let channel_id = &ctx
                 .cache
                 .guild(guild_id)
@@ -55,19 +48,23 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Opti
                     .await
                     .unwrap();
 
-                let obj = match songbird::input::restartable::Restartable::ytdl_search(&song, true)
-                    .await
-                {
+                let obj = match songbird::ytdl(format!("ytsearch1:{}", &song)).await {
                     Ok(source) => Some(source),
                     Err(why) => {
                         println!("An error ocurred {:?}", why);
                         None
                     }
                 };
-
                 if let Some(song) = obj {
-                    handler.stop();
                     let response = handler.play_source(song.into());
+
+                    match response.set_volume(1.0) {
+                        Ok(_) => (),
+                        Err(err) => println!("Failed to adjust song volume - {:?}", err),
+                    } // Default to full volume.
+
+                    response.play().unwrap();
+
                     println!("Response for song object - {:?}", response);
                     command
                         .create_followup_message(&ctx.http, |f| {
@@ -76,7 +73,6 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Opti
                         .await
                         .unwrap();
                 } else {
-                    println!("Rip song didn't play");
                     command
                         .create_followup_message(&ctx.http, |f| {
                             f.ephemeral(true).content("Unable to handle song request.")

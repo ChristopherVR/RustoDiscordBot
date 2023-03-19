@@ -1,3 +1,5 @@
+use std::process::Command;
+
 use serenity::{
     builder::CreateApplicationCommand, client::Context,
     model::prelude::interaction::application_command::ApplicationCommandInteraction,
@@ -17,14 +19,13 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Stri
         let manager = songbird::get(ctx).await.expect(
             "Failed to retrieve Songbird. Check if Songbird is registered on ClientBuilder.",
         );
+
         let (handler_lock, conn_result) = manager.join(guild_id, channel_id.0).await;
 
         if let Ok(_) = conn_result {
             let mut handler = handler_lock.lock().await;
-
             handler.stop();
             std::mem::drop(handler);
-
             return "Song stopped.".into();
         }
     }
