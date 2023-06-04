@@ -1,1 +1,1 @@
-pub mod terminator;
+pub mod teminate;

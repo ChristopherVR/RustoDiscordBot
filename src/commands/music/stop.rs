@@ -6,14 +6,17 @@ use serenity::{
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> String {
     println!("Running stop command.");
     if let Some(guild_id) = command.guild_id {
-        let channel_id = &ctx
+        if ctx
             .cache
             .guild(guild_id)
             .unwrap()
             .voice_states
             .get(&command.user.id)
             .and_then(|voice_state| voice_state.channel_id)
-            .expect("User needs to be connected to a voice channel.");
+            .is_none()
+        {
+            return "User needs to be connected to a voice channel.".into();
+        }
 
         let manager = songbird::get(ctx)
             .await
@@ -25,17 +28,17 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Stri
         let has_handler = manager.get(guild_id).is_some();
 
         if has_handler {
-            if let Err(e) = manager.remove(guild_id).await {
-                "Failed to leave the voice channel";
+            if let Err(_e) = manager.remove(guild_id).await {
+                return "Failed to leave the voice channel".into();
             }
 
-            "Bot has left the voice channel.";
+            return "Bot has left the voice channel.".into();
         } else {
-            "User is not in a voice channel.";
+            return "User is not in a voice channel.".into();
         }
     }
 
-    return "Unable to execute command. User is not connected to a channel".into();
+    "Unable to execute command. User is not connected to a channel".into()
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {

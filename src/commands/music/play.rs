@@ -1,12 +1,10 @@
 use std::time::Duration;
 
 use serenity::{
-    builder::CreateApplicationCommand,
-    client::Context,
-    json::Value,
-    model::prelude::{interaction::application_command::ApplicationCommandInteraction, Message},
-    Result as SerenityResult,
+    builder::CreateApplicationCommand, client::Context, json::Value,
+    model::prelude::interaction::application_command::ApplicationCommandInteraction,
 };
+use youtube_dl::SearchOptions;
 
 const SLASH_NAME: &str = "link-or-query";
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Option<String> {
@@ -42,7 +40,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Opti
             let (handler_lock, conn_result) = manager.join(guild_id, channel_id.0).await;
 
             let _res = command.defer(&ctx.http).await;
-            if let Ok(_) = conn_result {
+            if conn_result.is_ok() {
                 let mut handler = handler_lock.lock().await;
 
                 command
@@ -82,8 +80,8 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Opti
                     .await
                     .unwrap();
 
-                let interaction = match m
-                    .await_component_interaction(&ctx)
+                match m
+                    .await_component_interaction(ctx)
                     .timeout(Duration::from_secs(60 * 3))
                     .await
                 {
@@ -94,11 +92,6 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Opti
                     }
                 };
 
-                let mut interaction_stream = m
-                    .await_component_interactions(&ctx)
-                    .timeout(Duration::from_secs(60 * 3))
-                    .build();
-
                 let obj = match songbird::ytdl(format!("ytsearch1:{}", &song)).await {
                     Ok(source) => Some(source),
                     Err(why) => {
@@ -108,19 +101,12 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Opti
                 };
                 if let Some(song) = obj {
                     handler.stop();
-                    let response = handler.play_source(song.into());
+                    let response = handler.play_source(song);
 
                     match response.set_volume(1.0) {
                         Ok(_) => (),
                         Err(err) => println!("Failed to adjust song volume - {:?}", err),
                     } // Default to full volume.
-
-                    let send_http = ctx.http.clone();
-
-                    let fader = SongFader {
-                        chan_id: channel_id.clone(),
-                        http: send_http,
-                    };
 
                     command
                         .create_followup_message(&ctx.http, |f| {
@@ -139,19 +125,12 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Opti
             }
         }
 
-        return None;
+        None
     } else {
-        return Some("Unable to execute command. User is not connected to a channel".into());
+        Some("Unable to execute command. User is not connected to a channel".into())
     }
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     command.name("play").description("Plays a song")
-}
-
-/// Checks that a message successfully sent; if not, then logs why to stdout.
-fn check_msg(result: SerenityResult<Message>) {
-    if let Err(why) = result {
-        println!("Error sending message: {:?}", why);
-    }
 }

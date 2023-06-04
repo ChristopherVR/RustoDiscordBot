@@ -16,22 +16,19 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        // println!("The interaction {:?} ", interaction);
-
         if let Interaction::ApplicationCommand(command) = interaction {
-            // println!("Received command interaction: {:#?}", command);
-
             let content = match command.data.name.as_str() {
                 "hello" => commands::hello::run(&command.data.options),
                 "play" => match commands::music::play::run(&ctx, &command).await {
                     Some(v) => v,
                     None => "".into(),
                 },
+                "gpt" => commands::chatgpt::run().await,
                 "stop" => commands::music::stop::run(&ctx, &command).await,
                 _ => "not implemented :(".to_string(),
             };
 
-            if content.len() > 0 {
+            if !content.is_empty() {
                 if let Err(why) = command
                     .create_interaction_response(&ctx.http, |response| {
                         response
@@ -57,6 +54,7 @@ impl EventHandler for Handler {
                     .create_application_command(|command| commands::hello::register(command))
                     .create_application_command(|command| commands::music::play::register(command))
                     .create_application_command(|command| commands::music::stop::register(command))
+                    .create_application_command(|command| commands::chatgpt::register(command))
             })
             .await;
 
