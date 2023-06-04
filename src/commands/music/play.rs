@@ -1,10 +1,14 @@
+use std::time::Duration;
+
 use serenity::{
-    builder::CreateApplicationCommand, client::Context, json::Value,
-    model::prelude::interaction::application_command::ApplicationCommandInteraction,
+    builder::CreateApplicationCommand,
+    client::Context,
+    json::Value,
+    model::prelude::{interaction::application_command::ApplicationCommandInteraction, Message},
+    Result as SerenityResult,
 };
 
 const SLASH_NAME: &str = "link-or-query";
-
 pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Option<String> {
     println!("Running play command.");
 
@@ -24,7 +28,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Opti
             println!("Song to play - {}", song);
             let manager = songbird::get(ctx).await.expect(
                 "Failed to retrieve Songbird. Check if Songbird is registered on ClientBuilder.",
-            );
+            ).clone();
 
             let channel_id = &ctx
                 .cache
@@ -48,6 +52,53 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Opti
                     .await
                     .unwrap();
 
+                let search_options = SearchOptions::youtube(song).with_count(5);
+                let mut ytd = youtube_dl::YoutubeDl::search_for(&search_options);
+                let dl = youtube_dl::YoutubeDl::youtube_dl_path(&mut ytd, r"D:\youtube-dl-second");
+                let playlist = dl.run().unwrap().into_playlist().unwrap().entries.unwrap();
+
+                let m = command
+                    .channel_id
+                    .send_message(&ctx.http, |f| {
+                        f.content("Select a choice between **1** to **4**, or **cancel**.")
+                            .components(|c| {
+                                c.create_action_row(|row| {
+                                    row.create_select_menu(|m| {
+                                        m.custom_id("songs")
+                                            .placeholder("No song selected")
+                                            .options(|o| {
+                                                for song in &playlist {
+                                                    o.create_option(|fo| {
+                                                        fo.label(&song.title).value(&song.id)
+                                                    });
+                                                }
+
+                                                o
+                                            })
+                                    })
+                                })
+                            })
+                    })
+                    .await
+                    .unwrap();
+
+                let interaction = match m
+                    .await_component_interaction(&ctx)
+                    .timeout(Duration::from_secs(60 * 3))
+                    .await
+                {
+                    Some(x) => x,
+                    None => {
+                        m.reply(&ctx, "Timed out").await.unwrap();
+                        return None;
+                    }
+                };
+
+                let mut interaction_stream = m
+                    .await_component_interactions(&ctx)
+                    .timeout(Duration::from_secs(60 * 3))
+                    .build();
+
                 let obj = match songbird::ytdl(format!("ytsearch1:{}", &song)).await {
                     Ok(source) => Some(source),
                     Err(why) => {
@@ -56,6 +107,7 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Opti
                     }
                 };
                 if let Some(song) = obj {
+                    handler.stop();
                     let response = handler.play_source(song.into());
 
                     match response.set_volume(1.0) {
@@ -63,9 +115,13 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Opti
                         Err(err) => println!("Failed to adjust song volume - {:?}", err),
                     } // Default to full volume.
 
-                    response.play().unwrap();
+                    let send_http = ctx.http.clone();
 
-                    println!("Response for song object - {:?}", response);
+                    let fader = SongFader {
+                        chan_id: channel_id.clone(),
+                        http: send_http,
+                    };
+
                     command
                         .create_followup_message(&ctx.http, |f| {
                             f.ephemeral(true).content("Song played!.")
@@ -91,4 +147,11 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Opti
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
     command.name("play").description("Plays a song")
+}
+
+/// Checks that a message successfully sent; if not, then logs why to stdout.
+fn check_msg(result: SerenityResult<Message>) {
+    if let Err(why) = result {
+        println!("Error sending message: {:?}", why);
+    }
 }

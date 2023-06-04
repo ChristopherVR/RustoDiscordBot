@@ -7,6 +7,7 @@ use songbird::SerenityInit;
 use std::env;
 
 mod commands;
+mod terminator;
 
 use serenity::model::application::interaction::{Interaction, InteractionResponseType};
 use serenity::model::id::GuildId;

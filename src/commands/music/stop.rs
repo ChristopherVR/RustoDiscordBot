@@ -1,5 +1,3 @@
-use std::process::Command;
-
 use serenity::{
     builder::CreateApplicationCommand, client::Context,
     model::prelude::interaction::application_command::ApplicationCommandInteraction,
@@ -16,17 +14,24 @@ pub async fn run(ctx: &Context, command: &ApplicationCommandInteraction) -> Stri
             .get(&command.user.id)
             .and_then(|voice_state| voice_state.channel_id)
             .expect("User needs to be connected to a voice channel.");
-        let manager = songbird::get(ctx).await.expect(
-            "Failed to retrieve Songbird. Check if Songbird is registered on ClientBuilder.",
-        );
 
-        let (handler_lock, conn_result) = manager.join(guild_id, channel_id.0).await;
+        let manager = songbird::get(ctx)
+            .await
+            .expect(
+                "Failed to retrieve Songbird. Check if Songbird is registered on ClientBuilder.",
+            )
+            .clone();
 
-        if let Ok(_) = conn_result {
-            let mut handler = handler_lock.lock().await;
-            handler.stop();
-            std::mem::drop(handler);
-            return "Song stopped.".into();
+        let has_handler = manager.get(guild_id).is_some();
+
+        if has_handler {
+            if let Err(e) = manager.remove(guild_id).await {
+                "Failed to leave the voice channel";
+            }
+
+            "Bot has left the voice channel.";
+        } else {
+            "User is not in a voice channel.";
         }
     }
 
