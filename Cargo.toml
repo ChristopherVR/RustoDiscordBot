@@ -11,6 +11,6 @@ serenity = {  version = "0.11.6", default-features = false, features = ["client"
 songbird = "0.3.1"
 tokio = { version = "1.29.1", features = ["macros", "rt-multi-thread"] }
 youtube_dl = "0.8.0"
-chatgpt_rs = "1.1.13"
+chatgpt_rs = "1.1.14"
 winapi = { version = "0.3", features = ["windef"] }
 cargo-watch = "8.4.0"
