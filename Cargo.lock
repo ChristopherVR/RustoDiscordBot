@@ -372,9 +372,9 @@ dependencies = [
 
 [[package]]
 name = "cargo-watch"
-version = "8.4.0"
+version = "8.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac3905c4ba8255b1d8b14f4a53bdb36a5aead5f3f2650c50abc81524321f52ef"
+checksum = "554cae2dad0147ef6cb36eb8b3347648a00762dc110af8d76d5c793fe9378f11"
 dependencies = [
  "camino",
  "cargo_metadata",
@@ -389,9 +389,9 @@ dependencies = [
 
 [[package]]
 name = "cargo_metadata"
-version = "0.15.4"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eee4243f1f26fc7a42710e7439c149e2b10b05472f88090acce52632f231a73a"
+checksum = "e7daec1a2a2129eeba1644b220b4647ec537b0b5d4bfd6876fcc5a540056b592"
 dependencies = [
  "camino",
  "cargo-platform",
